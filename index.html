@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mini Mario Mobile</title>
+<title>Mario Mobile</title>
 
 <style>
 body {
@@ -12,20 +12,11 @@ body {
   background: skyblue;
 }
 
-#game {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-}
-
 #mario {
   position: absolute;
   bottom: 60px;
   left: 50px;
-  width: 40px;
-  height: 40px;
-  background: red;
-  border-radius: 8px;
+  font-size: 40px; /* EMOJI */
 }
 
 .ground {
@@ -36,7 +27,6 @@ body {
   background: green;
 }
 
-/* Butonlar */
 .controls {
   position: fixed;
   bottom: 10px;
@@ -49,20 +39,15 @@ button {
   width: 70px;
   height: 70px;
   font-size: 20px;
-  border: none;
   border-radius: 50%;
-  background: rgba(0,0,0,0.5);
-  color: white;
 }
 </style>
-
 </head>
+
 <body>
 
-<div id="game">
-  <div id="mario"></div>
-  <div class="ground"></div>
-</div>
+<div id="mario">🍄</div>
+<div class="ground"></div>
 
 <div class="controls">
   <button onclick="move(-10)">⬅️</button>
