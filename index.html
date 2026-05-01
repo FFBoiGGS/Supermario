@@ -3,77 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Deniz Z - Pro Mario</title>
+    <title>Süper Mario - Deniz Z Edition</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #5c94fc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; }
+        body { margin: 0; overflow: hidden; background: #5c94fc; font-family: 'Arial Black', sans-serif; touch-action: none; }
         canvas { display: block; }
 
-        /* Ortak Overlay (Menü, Ayarlar, Ölüm) */
+        /* Overlay Ekranları */
         .overlay { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.85); display: flex; flex-direction: column; 
+            background: rgba(0,0,0,0.8); display: flex; flex-direction: column; 
             align-items: center; justify-content: center; z-index: 500; color: white;
             text-align: center;
         }
         .hidden { display: none !important; }
 
         .btn-ui { 
-            padding: 20px 50px; margin: 15px; background: #27ae60; 
-            border: 5px solid #fff; border-radius: 15px; color: white; 
-            font-size: 24px; font-weight: bold; cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            padding: 18px 45px; margin: 12px; background: #e74c3c; 
+            border: 4px solid #fff; border-radius: 12px; color: white; 
+            font-size: 22px; font-weight: bold; cursor: pointer;
         }
-        .btn-ui:active { transform: scale(0.95); background: #2ecc71; }
+        .btn-ui:active { transform: scale(0.95); background: #c0392b; }
 
-        /* GUI Bilgileri */
-        #topGui { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; color: white; z-index: 100; font-size: 20px; text-shadow: 2px 2px #000; }
+        #gui { position: absolute; top: 15px; width: 100%; display: flex; justify-content: space-around; color: white; z-index: 100; font-size: 20px; text-shadow: 2px 2px #000; }
 
-        /* Mobil Kontroller */
-        .controls { position: absolute; bottom: 40px; width: 100%; display: flex; justify-content: space-around; z-index: 100; }
-        .touch-btn { width: 80px; height: 80px; background: rgba(255,255,255,0.2); border: 4px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 35px; }
-        .jump { background: #e74c3c !important; width: 100px; height: 100px; }
+        /* Kontroller */
+        .controls { position: absolute; bottom: 35px; width: 100%; display: flex; justify-content: space-around; z-index: 100; }
+        .t-btn { width: 75px; height: 75px; background: rgba(255,255,255,0.25); border: 3px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 30px; }
+        .jump { background: #f1c40f !important; width: 90px; height: 90px; color: #000; }
     </style>
 </head>
 <body>
 
 <!-- GİRİŞ EKRANI -->
 <div id="startScreen" class="overlay">
-    <h1 style="font-size: 50px; color: #f1c40f; margin-bottom: 0;">SUPER DENİZ</h1>
-    <p style="margin-top: 5px; opacity: 0.8;">DENİZ Z TARAFINDAN YAPILDI</p>
+    <h1 style="font-size: 55px; color: #ff0000; -webkit-text-stroke: 2px white; margin-bottom: 0;">SÜPER MARİO</h1>
+    <p style="margin-top: 10px; letter-spacing: 2px;">DENİZ Z SUNAR</p>
     <button class="btn-ui" onclick="startGame()">OYUNU BAŞLAT</button>
     <button class="btn-ui" style="background: #34495e;" onclick="toggleMenu('settingsScreen', true)">AYARLAR</button>
 </div>
 
 <!-- AYARLAR EKRANI -->
 <div id="settingsScreen" class="overlay hidden">
-    <h1 style="font-size: 60px;">"NE ARIYON?"</h1>
-    <p>Burada ayar falan yok knk.</p>
-    <button class="btn-ui" onclick="toggleMenu('settingsScreen', false)">GERİ GİT</button>
+    <h1 style="font-size: 50px;">"NE ARIYON?"</h1>
+    <button class="btn-ui" onclick="toggleMenu('settingsScreen', false)">KAPAT</button>
 </div>
 
-<!-- ÖLÜM EKRANI (İstediğin Özel GUI) -->
+<!-- ÖLÜM EKRANI -->
 <div id="deathScreen" class="overlay hidden">
-    <h1 style="font-size: 60px; color: #c0392b;">EYVAH! ÖLDÜN.</h1>
-    <p style="font-size: 24px;">Skorun: <span id="finalScore">0</span></p>
-    <button class="btn-ui" style="background: #e67e22;" onclick="location.reload()">TEKRAR OYNA 🔄</button>
-    <button class="btn-ui" style="background: #34495e;" onclick="location.reload()">MENÜYE DÖN</button>
+    <h1 style="font-size: 50px; color: #ff0000;">GAME OVER!</h1>
+    <p>Skor: <span id="finalScore">0</span></p>
+    <button class="btn-ui" onclick="location.reload()">TEKRAR DENE</button>
 </div>
 
-<!-- OYUN İÇİ GUI -->
-<div id="topGui">
+<div id="gui">
     <div>SKOR: <span id="scoreDisplay">0</span></div>
     <div>CAN: <span id="statusDisplay">👨‍</span></div>
 </div>
 
 <canvas id="gameCanvas"></canvas>
 
-<!-- KONTROLLER -->
 <div class="controls">
     <div style="display:flex; gap:20px;">
-        <div class="touch-btn" id="left">←</div>
-        <div class="touch-btn" id="right">→</div>
+        <div class="t-btn" id="l">←</div>
+        <div class="t-btn" id="r">→</div>
     </div>
-    <div class="touch-btn jump" id="jump">A</div>
+    <div class="t-btn jump" id="j">A</div>
 </div>
 
 <script>
@@ -85,7 +79,7 @@ canvas.height = window.innerHeight;
 let cameraX = 0;
 let score = 0;
 let isPlaying = false;
-const gravity = 0.8;
+const gravity = 0.75;
 
 const player = {
     x: 100, y: 0, w: 45, h: 45, vx: 0, vy: 0,
@@ -93,33 +87,32 @@ const player = {
 };
 
 const platforms = [
-    {x: 0, y: canvas.height-80, w: 5000, h: 80, color: '#27ae60'},
-    {x: 400, y: canvas.height-220, w: 70, h: 70, box: true, item: 'mush'},
-    {x: 700, y: canvas.height-280, w: 150, h: 40, color: '#e67e22'},
-    {x: 1000, y: canvas.height-350, w: 70, h: 70, box: true, item: 'mush'}
+    {x: 0, y: canvas.height-80, w: 10000, h: 80, color: '#522d1b'}, // Uzun yer
+    {x: 400, y: canvas.height-220, w: 60, h: 60, box: true, hasItem: true},
+    {x: 650, y: canvas.height-280, w: 150, h: 40, color: '#ab5233'},
+    {x: 1000, y: canvas.height-220, w: 60, h: 60, box: true, hasItem: true},
+    {x: 1300, y: canvas.height-350, w: 200, h: 40, color: '#ab5233'}
 ];
 
 const enemies = [
-    {x: 600, y: canvas.height-125, w: 45, h: 45, vx: -2.5, start: 600, range: 200},
-    {x: 1200, y: canvas.height-125, w: 45, h: 45, vx: -2, start: 1200, range: 300}
+    {x: 700, y: canvas.height-125, w: 45, h: 45, vx: -2, start: 700, range: 250},
+    {x: 1400, y: canvas.height-125, w: 45, h: 45, vx: -2, start: 1400, range: 350}
 ];
 
-const items = [];
+const mushrooms = [];
 
-// Fonksiyonlar
 function startGame() { toggleMenu('startScreen', false); isPlaying = true; }
 function toggleMenu(id, show) { document.getElementById(id).classList.toggle('hidden', !show); }
 
-// Kontrol Bind
 let keys = { l: false, r: false };
-const setupBtn = (id, down, up) => {
+const setupBtn = (id, dn, up) => {
     const el = document.getElementById(id);
-    el.addEventListener('touchstart', (e) => { e.preventDefault(); down(); });
+    el.addEventListener('touchstart', (e) => { e.preventDefault(); dn(); });
     el.addEventListener('touchend', (e) => { e.preventDefault(); up(); });
 };
-setupBtn('left', () => { keys.l = true; player.side = -1; }, () => keys.l = false);
-setupBtn('right', () => { keys.r = true; player.side = 1; }, () => keys.r = false);
-setupBtn('jump', () => { if(player.grounded) player.vy = -18; }, () => {});
+setupBtn('l', () => { keys.l = true; player.side = -1; }, () => keys.l = false);
+setupBtn('r', () => { keys.r = true; player.side = 1; }, () => keys.r = false);
+setupBtn('j', () => { if(player.grounded) player.vy = -18; }, () => {});
 
 function update() {
     if(!isPlaying) return;
@@ -140,17 +133,30 @@ function update() {
             if(player.vy > 0 && player.y + player.h - player.vy <= p.y) {
                 player.vy = 0; player.y = p.y - player.h; player.grounded = true;
             } else if(player.vy < 0 && player.y - player.vy >= p.y + p.h) {
-                player.vy = 4;
-                if(p.box && p.item) { items.push({x: p.x + 10, y: p.y - 50, w: 40, h: 40, vx: 2.5}); p.item = null; }
+                player.vy = 3;
+                if(p.box && p.hasItem) { mushrooms.push({x: p.x + 10, y: p.y - 50, w: 40, h: 40, vx: 2.5, vy: 0}); p.hasItem = false; }
             }
         }
     });
 
-    items.forEach((m, i) => {
+    // Mantar Fiziği (Yere Düşme Ekli)
+    mushrooms.forEach((m, i) => {
+        m.vy += gravity;
         m.x += m.vx;
+        m.y += m.vy;
+
+        // Mantar Yer Kontrolü
+        platforms.forEach(p => {
+            if(m.x < p.x + p.w && m.x + m.w > p.x && m.y < p.y + p.h && m.y + m.h > p.y) {
+                if(m.vy > 0) { m.vy = 0; m.y = p.y - m.h; }
+            }
+        });
+
         if(player.x < m.x + m.w && player.x + player.w > m.x && player.y < m.y + m.h && player.y + player.h > m.y) {
-            player.big = true; document.getElementById('statusDisplay').innerText = "🍄 (BÜYÜK)";
-            items.splice(i, 1);
+            player.big = true; player.h = 60; // Boyutu büyült
+            document.getElementById('statusDisplay').innerText = "🍄 (BÜYÜK)";
+            mushrooms.splice(i, 1);
+            score += 1000;
         }
     });
 
@@ -158,15 +164,16 @@ function update() {
         en.x += en.vx;
         if(Math.abs(en.x - en.start) > en.range) en.vx *= -1;
         if(player.x < en.x + en.w && player.x + player.w > en.x && player.y < en.y + en.h && player.y + player.h > en.y) {
-            if(player.vy > 5) { enemies.splice(i, 1); player.vy = -12; score += 500; document.getElementById('scoreDisplay').innerText = score; }
+            if(player.vy > 5) { enemies.splice(i, 1); player.vy = -12; score += 500; }
             else {
-                if(player.big) { player.big = false; player.x -= 150; document.getElementById('statusDisplay').innerText = "👨‍"; }
+                if(player.big) { player.big = false; player.h = 45; player.x -= 150; document.getElementById('statusDisplay').innerText = "👨‍"; }
                 else { isPlaying = false; document.getElementById('finalScore').innerText = score; toggleMenu('deathScreen', true); }
             }
         }
     });
 
     if(player.y > canvas.height) { isPlaying = false; toggleMenu('deathScreen', true); }
+    document.getElementById('scoreDisplay').innerText = score;
 }
 
 function draw() {
@@ -174,19 +181,23 @@ function draw() {
     ctx.save();
     ctx.translate(-cameraX, 0);
 
+    // Çimenler (Zemin)
+    ctx.fillStyle = '#74bf2e';
+    ctx.fillRect(cameraX, canvas.height-85, canvas.width*10, 10);
+
     platforms.forEach(p => {
-        ctx.fillStyle = p.box ? (p.item ? '#f1c40f' : '#7f8c8d') : (p.color || '#ab5233');
+        ctx.fillStyle = p.box ? (p.hasItem ? '#f1c40f' : '#bdc3c7') : (p.color || '#ab5233');
         ctx.fillRect(p.x, p.y, p.w, p.h);
-        if(p.box && p.item) { ctx.fillStyle='white'; ctx.font='30px Arial'; ctx.fillText('?', p.x+22, p.y+45); }
+        if(p.box && p.hasItem) { ctx.fillStyle='white'; ctx.font='bold 35px Arial'; ctx.fillText('?', p.x+20, p.y+42); }
     });
 
-    ctx.font = '45px Arial';
-    items.forEach(m => ctx.fillText('🍄', m.x, m.y + 38));
-    enemies.forEach(en => ctx.fillText('👾', en.x, en.y + 38));
+    ctx.font = '40px Arial';
+    mushrooms.forEach(m => ctx.fillText('🍄', m.x, m.y + 35));
+    enemies.forEach(en => ctx.fillText('👾', en.x, en.y + 35));
     
     ctx.save();
-    if(player.side === -1) { ctx.translate(player.x + 45, player.y); ctx.scale(-1, 1); ctx.fillText(player.big ? '🍄' : '👨‍', 0, 40); }
-    else { ctx.fillText(player.big ? '🍄' : '👨‍', player.x, player.y + 40); }
+    if(player.side === -1) { ctx.translate(player.x + player.w, player.y); ctx.scale(-1, 1); ctx.fillText(player.big ? '🍄' : '👨‍', 0, player.h - 5); }
+    else { ctx.fillText(player.big ? '🍄' : '👨‍', player.x, player.y + player.h - 5); }
     ctx.restore();
 
     ctx.restore();
