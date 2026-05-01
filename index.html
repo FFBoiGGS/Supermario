@@ -8,7 +8,53 @@
 body {
   margin: 0;
   overflow: hidden;
+  background: black;
+  font-family: Arial;
+  color: white;
+  text-align: center;
+}
+
+/* MENÜ */
+#menu, #gameover {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: black;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.hidden {
+  display: none;
+}
+
+.title {
+  font-size: 40px;
+  margin-bottom: 20px;
+}
+
+.credit {
+  margin-top: 20px;
+  font-size: 20px;
+  color: cyan;
+  text-shadow: 0 0 10px cyan;
+}
+
+button {
+  padding: 15px 30px;
+  font-size: 20px;
+  margin-top: 20px;
+}
+
+/* OYUN */
+#game {
+  display: none;
   background: skyblue;
+  width: 100%;
+  height: 100vh;
+  position: relative;
 }
 
 #mario {
@@ -16,7 +62,6 @@ body {
   bottom: 60px;
   left: 60px;
   font-size: 35px;
-  transition: 0.1s;
 }
 
 .big {
@@ -31,23 +76,19 @@ body {
   background: green;
 }
 
-.enemy {
+.enemy, .mushroom {
   position: absolute;
   bottom: 60px;
   font-size: 30px;
 }
 
-.mushroom {
-  position: absolute;
-  bottom: 60px;
-  font-size: 25px;
-}
-
-button {
+.controls {
   position: fixed;
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  width: 100%;
+}
+
+.jumpBtn {
   width: 80px;
   height: 80px;
   font-size: 25px;
@@ -57,21 +98,59 @@ button {
 
 <body>
 
-<div id="mario">🍄</div>
-<div class="ground"></div>
+<!-- ANA MENÜ -->
+<div id="menu">
+  <div class="title">🍄 MINI MARIO</div>
+  <button onclick="startGame()">Başla</button>
+  <div class="credit">✨ DENİZ Z tarafından yapıldı ✨</div>
+</div>
 
-<button onclick="jump()">⬆️</button>
+<!-- OYUN -->
+<div id="game">
+  <div id="mario">🍄</div>
+  <div class="ground"></div>
+
+  <div class="controls">
+    <button class="jumpBtn" onclick="jump()">⬆️</button>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameover" class="hidden">
+  <div class="title">💀 ÖLDÜN</div>
+  <button onclick="restart()">Tekrar Oyna</button>
+  <div class="credit">✨ DENİZ Z tarafından yapıldı ✨</div>
+</div>
 
 <script>
 let mario = document.getElementById("mario");
+let gameDiv = document.getElementById("game");
+let menu = document.getElementById("menu");
+let gameover = document.getElementById("gameover");
 
-let y = 60;
-let v = 0;
-let g = 0.6;
-let jumping = false;
-let big = false;
+let y, v, jumping, big, objects, running;
 
-let objects = [];
+function startGame() {
+  menu.classList.add("hidden");
+  gameDiv.style.display = "block";
+  resetGame();
+}
+
+function resetGame() {
+  y = 60;
+  v = 0;
+  jumping = false;
+  big = false;
+  objects = [];
+  running = true;
+  mario.classList.remove("big");
+}
+
+function restart() {
+  gameover.classList.add("hidden");
+  gameDiv.style.display = "block";
+  resetGame();
+}
 
 function jump() {
   if (!jumping) {
@@ -85,7 +164,7 @@ function spawnEnemy() {
   e.className = "enemy";
   e.innerHTML = "👾";
   e.x = window.innerWidth;
-  document.body.appendChild(e);
+  gameDiv.appendChild(e);
   objects.push(e);
 }
 
@@ -94,68 +173,70 @@ function spawnMushroom() {
   m.className = "mushroom";
   m.innerHTML = "🍄";
   m.x = window.innerWidth;
-  document.body.appendChild(m);
+  gameDiv.appendChild(m);
   objects.push(m);
 }
 
 setInterval(() => {
-  if (Math.random() < 0.6) spawnEnemy();
-  else spawnMushroom();
+  if (!running) return;
+  Math.random() < 0.6 ? spawnEnemy() : spawnMushroom();
 }, 2000);
 
+function endGame() {
+  running = false;
+  gameDiv.style.display = "none";
+  gameover.classList.remove("hidden");
+}
+
 function game() {
-  // zıplama
-  v -= g;
-  y += v;
+  if (running) {
+    v -= 0.6;
+    y += v;
 
-  if (y <= 60) {
-    y = 60;
-    v = 0;
-    jumping = false;
-  }
+    if (y <= 60) {
+      y = 60;
+      v = 0;
+      jumping = false;
+    }
 
-  mario.style.bottom = y + "px";
+    mario.style.bottom = y + "px";
 
-  let marioX = 60;
-  let marioSize = big ? 60 : 35;
+    let marioX = 60;
+    let size = big ? 60 : 35;
 
-  objects.forEach((obj, i) => {
-    obj.x -= 5;
-    obj.style.left = obj.x + "px";
+    objects.forEach((obj, i) => {
+      obj.x -= 5;
+      obj.style.left = obj.x + "px";
 
-    let objWidth = 30;
+      if (
+        obj.x < marioX + size &&
+        obj.x + 30 > marioX &&
+        y < 100
+      ) {
+        if (obj.className === "enemy") {
+          if (v < 0) {
+            obj.remove();
+            objects.splice(i,1);
+            v = 8;
+          } else {
+            endGame();
+          }
+        }
 
-    // çarpışma
-    if (
-      obj.x < marioX + marioSize &&
-      obj.x + objWidth > marioX &&
-      y < 100
-    ) {
-      if (obj.className === "enemy") {
-        if (v < 0) {
-          // üstüne bas
+        if (obj.className === "mushroom") {
+          big = true;
+          mario.classList.add("big");
           obj.remove();
           objects.splice(i,1);
-          v = 8;
-        } else {
-          alert("Öldün 😢");
-          location.reload();
         }
       }
 
-      if (obj.className === "mushroom") {
-        big = true;
-        mario.classList.add("big");
+      if (obj.x < -50) {
         obj.remove();
         objects.splice(i,1);
       }
-    }
-
-    if (obj.x < -50) {
-      obj.remove();
-      objects.splice(i,1);
-    }
-  });
+    });
+  }
 
   requestAnimationFrame(game);
 }
