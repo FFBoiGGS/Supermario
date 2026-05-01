@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mario Mobile</title>
+<title>Mario</title>
 
 <style>
 body {
@@ -16,7 +15,9 @@ body {
   position: absolute;
   bottom: 60px;
   left: 50px;
-  font-size: 40px; /* EMOJI */
+  width: 50px;
+  height: 50px;
+  background: red;
 }
 
 .ground {
@@ -38,21 +39,19 @@ body {
 button {
   width: 70px;
   height: 70px;
-  font-size: 20px;
-  border-radius: 50%;
 }
 </style>
 </head>
 
 <body>
 
-<div id="mario">🍄</div>
+<div id="mario"></div>
 <div class="ground"></div>
 
 <div class="controls">
-  <button onclick="move(-10)">⬅️</button>
+  <button onclick="move(-20)">⬅️</button>
   <button onclick="jump()">⬆️</button>
-  <button onclick="move(10)">➡️</button>
+  <button onclick="move(20)">➡️</button>
 </div>
 
 <script>
@@ -60,37 +59,38 @@ let mario = document.getElementById("mario");
 
 let x = 50;
 let y = 60;
-let velocity = 0;
-let gravity = 0.6;
+let v = 0;
+let g = 0.6;
 let jumping = false;
 
-function move(dir) {
-  x += dir;
+function move(d) {
+  x += d;
 }
 
 function jump() {
   if (!jumping) {
-    velocity = 12;
+    v = 12;
     jumping = true;
   }
 }
 
-function gameLoop() {
-  velocity -= gravity;
-  y += velocity;
+function loop() {
+  v -= g;
+  y += v;
 
   if (y <= 60) {
     y = 60;
+    v = 0;
     jumping = false;
   }
 
   mario.style.left = x + "px";
   mario.style.bottom = y + "px";
 
-  requestAnimationFrame(gameLoop);
+  requestAnimationFrame(loop);
 }
 
-gameLoop();
+loop();
 </script>
 
 </body>
