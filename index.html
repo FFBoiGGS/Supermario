@@ -1,247 +1,115 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mario Clone</title>
-
+<meta charset="UTF-8">
+<title>Mini Platform Game</title>
 <style>
-body {
-  margin: 0;
-  overflow: hidden;
-  background: black;
-  font-family: Arial;
-  color: white;
-  text-align: center;
-}
-
-/* MENÜ */
-#menu, #gameover {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  background: black;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.hidden {
-  display: none;
-}
-
-.title {
-  font-size: 40px;
-  margin-bottom: 20px;
-}
-
-.credit {
-  margin-top: 20px;
-  font-size: 20px;
-  color: cyan;
-  text-shadow: 0 0 10px cyan;
-}
-
-button {
-  padding: 15px 30px;
-  font-size: 20px;
-  margin-top: 20px;
-}
-
-/* OYUN */
-#game {
-  display: none;
-  background: skyblue;
-  width: 100%;
-  height: 100vh;
-  position: relative;
-}
-
-#mario {
-  position: absolute;
-  bottom: 60px;
-  left: 60px;
-  font-size: 35px;
-}
-
-.big {
-  font-size: 60px !important;
-}
-
-.ground {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 60px;
-  background: green;
-}
-
-.enemy, .mushroom {
-  position: absolute;
-  bottom: 60px;
-  font-size: 30px;
-}
-
-.controls {
-  position: fixed;
-  bottom: 20px;
-  width: 100%;
-}
-
-.jumpBtn {
-  width: 80px;
-  height: 80px;
-  font-size: 25px;
-}
+body { margin:0; background:#87CEEB; overflow:hidden; }
+canvas { display:block; margin:auto; background:#6bd16b; }
 </style>
 </head>
-
 <body>
 
-<!-- ANA MENÜ -->
-<div id="menu">
-  <div class="title">🍄 MINI MARIO</div>
-  <button onclick="startGame()">Başla</button>
-  <div class="credit">✨ DENİZ Z tarafından yapıldı ✨</div>
-</div>
-
-<!-- OYUN -->
-<div id="game">
-  <div id="mario">🍄</div>
-  <div class="ground"></div>
-
-  <div class="controls">
-    <button class="jumpBtn" onclick="jump()">⬆️</button>
-  </div>
-</div>
-
-<!-- GAME OVER -->
-<div id="gameover" class="hidden">
-  <div class="title">💀 ÖLDÜN</div>
-  <button onclick="restart()">Tekrar Oyna</button>
-  <div class="credit">✨ DENİZ Z tarafından yapıldı ✨</div>
-</div>
+<canvas id="game" width="800" height="400"></canvas>
 
 <script>
-let mario = document.getElementById("mario");
-let gameDiv = document.getElementById("game");
-let menu = document.getElementById("menu");
-let gameover = document.getElementById("gameover");
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-let y, v, jumping, big, objects, running;
+// Oyuncu
+let player = {
+  x: 50,
+  y: 300,
+  w: 30,
+  h: 30,
+  dy: 0,
+  jump: 10,
+  grounded: false
+};
 
-function startGame() {
-  menu.classList.add("hidden");
-  gameDiv.style.display = "block";
-  resetGame();
-}
+// Yer çekimi
+let gravity = 0.5;
 
-function resetGame() {
-  y = 60;
-  v = 0;
-  jumping = false;
-  big = false;
-  objects = [];
-  running = true;
-  mario.classList.remove("big");
-}
+// Zemin
+let ground = 350;
 
-function restart() {
-  gameover.classList.add("hidden");
-  gameDiv.style.display = "block";
-  resetGame();
-}
+// Düşman
+let enemy = {
+  x: 600,
+  y: 320,
+  w: 30,
+  h: 30,
+  dir: -2
+};
 
-function jump() {
-  if (!jumping) {
-    v = 12;
-    jumping = true;
+let keys = {};
+
+document.addEventListener("keydown", e => keys[e.code] = true);
+document.addEventListener("keyup", e => keys[e.code] = false);
+
+function update() {
+
+  // Hareket
+  if(keys["ArrowRight"]) player.x += 4;
+  if(keys["ArrowLeft"]) player.x -= 4;
+
+  // Zıplama
+  if(keys["Space"] && player.grounded){
+    player.dy = -player.jump;
+    player.grounded = false;
+  }
+
+  player.dy += gravity;
+  player.y += player.dy;
+
+  // Zemin kontrol
+  if(player.y + player.h >= ground){
+    player.y = ground - player.h;
+    player.dy = 0;
+    player.grounded = true;
+  }
+
+  // Düşman hareketi
+  enemy.x += enemy.dir;
+  if(enemy.x < 400 || enemy.x > 750){
+    enemy.dir *= -1;
+  }
+
+  // Çarpışma
+  if(
+    player.x < enemy.x + enemy.w &&
+    player.x + player.w > enemy.x &&
+    player.y < enemy.y + enemy.h &&
+    player.y + player.h > enemy.y
+  ){
+    alert("ÖLDÜN 💀");
+    location.reload();
   }
 }
 
-function spawnEnemy() {
-  let e = document.createElement("div");
-  e.className = "enemy";
-  e.innerHTML = "👾";
-  e.x = window.innerWidth;
-  gameDiv.appendChild(e);
-  objects.push(e);
+function draw() {
+  ctx.clearRect(0,0,800,400);
+
+  // zemin
+  ctx.fillStyle = "green";
+  ctx.fillRect(0, ground, 800, 50);
+
+  // oyuncu
+  ctx.fillStyle = "red";
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+
+  // düşman
+  ctx.fillStyle = "brown";
+  ctx.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
 }
 
-function spawnMushroom() {
-  let m = document.createElement("div");
-  m.className = "mushroom";
-  m.innerHTML = "🍄";
-  m.x = window.innerWidth;
-  gameDiv.appendChild(m);
-  objects.push(m);
+function loop(){
+  update();
+  draw();
+  requestAnimationFrame(loop);
 }
 
-setInterval(() => {
-  if (!running) return;
-  Math.random() < 0.6 ? spawnEnemy() : spawnMushroom();
-}, 2000);
-
-function endGame() {
-  running = false;
-  gameDiv.style.display = "none";
-  gameover.classList.remove("hidden");
-}
-
-function game() {
-  if (running) {
-    v -= 0.6;
-    y += v;
-
-    if (y <= 60) {
-      y = 60;
-      v = 0;
-      jumping = false;
-    }
-
-    mario.style.bottom = y + "px";
-
-    let marioX = 60;
-    let size = big ? 60 : 35;
-
-    objects.forEach((obj, i) => {
-      obj.x -= 5;
-      obj.style.left = obj.x + "px";
-
-      if (
-        obj.x < marioX + size &&
-        obj.x + 30 > marioX &&
-        y < 100
-      ) {
-        if (obj.className === "enemy") {
-          if (v < 0) {
-            obj.remove();
-            objects.splice(i,1);
-            v = 8;
-          } else {
-            endGame();
-          }
-        }
-
-        if (obj.className === "mushroom") {
-          big = true;
-          mario.classList.add("big");
-          obj.remove();
-          objects.splice(i,1);
-        }
-      }
-
-      if (obj.x < -50) {
-        obj.remove();
-        objects.splice(i,1);
-      }
-    });
-  }
-
-  requestAnimationFrame(game);
-}
-
-game();
+loop();
 </script>
 
 </body>
