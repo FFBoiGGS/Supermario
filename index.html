@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mario</title>
+<title>Mario Clone</title>
 
 <style>
 body {
@@ -14,10 +14,13 @@ body {
 #mario {
   position: absolute;
   bottom: 60px;
-  left: 50px;
-  width: 50px;
-  height: 50px;
-  background: red;
+  left: 60px;
+  font-size: 35px;
+  transition: 0.1s;
+}
+
+.big {
+  font-size: 60px !important;
 }
 
 .ground {
@@ -28,44 +31,47 @@ body {
   background: green;
 }
 
-.controls {
-  position: fixed;
-  bottom: 10px;
-  width: 100%;
-  display: flex;
-  justify-content: space-around;
+.enemy {
+  position: absolute;
+  bottom: 60px;
+  font-size: 30px;
+}
+
+.mushroom {
+  position: absolute;
+  bottom: 60px;
+  font-size: 25px;
 }
 
 button {
-  width: 70px;
-  height: 70px;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 80px;
+  font-size: 25px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="mario"></div>
+<div id="mario">🍄</div>
 <div class="ground"></div>
 
-<div class="controls">
-  <button onclick="move(-20)">⬅️</button>
-  <button onclick="jump()">⬆️</button>
-  <button onclick="move(20)">➡️</button>
-</div>
+<button onclick="jump()">⬆️</button>
 
 <script>
 let mario = document.getElementById("mario");
 
-let x = 50;
 let y = 60;
 let v = 0;
 let g = 0.6;
 let jumping = false;
+let big = false;
 
-function move(d) {
-  x += d;
-}
+let objects = [];
 
 function jump() {
   if (!jumping) {
@@ -74,7 +80,31 @@ function jump() {
   }
 }
 
-function loop() {
+function spawnEnemy() {
+  let e = document.createElement("div");
+  e.className = "enemy";
+  e.innerHTML = "👾";
+  e.x = window.innerWidth;
+  document.body.appendChild(e);
+  objects.push(e);
+}
+
+function spawnMushroom() {
+  let m = document.createElement("div");
+  m.className = "mushroom";
+  m.innerHTML = "🍄";
+  m.x = window.innerWidth;
+  document.body.appendChild(m);
+  objects.push(m);
+}
+
+setInterval(() => {
+  if (Math.random() < 0.6) spawnEnemy();
+  else spawnMushroom();
+}, 2000);
+
+function game() {
+  // zıplama
   v -= g;
   y += v;
 
@@ -84,13 +114,53 @@ function loop() {
     jumping = false;
   }
 
-  mario.style.left = x + "px";
   mario.style.bottom = y + "px";
 
-  requestAnimationFrame(loop);
+  let marioX = 60;
+  let marioSize = big ? 60 : 35;
+
+  objects.forEach((obj, i) => {
+    obj.x -= 5;
+    obj.style.left = obj.x + "px";
+
+    let objWidth = 30;
+
+    // çarpışma
+    if (
+      obj.x < marioX + marioSize &&
+      obj.x + objWidth > marioX &&
+      y < 100
+    ) {
+      if (obj.className === "enemy") {
+        if (v < 0) {
+          // üstüne bas
+          obj.remove();
+          objects.splice(i,1);
+          v = 8;
+        } else {
+          alert("Öldün 😢");
+          location.reload();
+        }
+      }
+
+      if (obj.className === "mushroom") {
+        big = true;
+        mario.classList.add("big");
+        obj.remove();
+        objects.splice(i,1);
+      }
+    }
+
+    if (obj.x < -50) {
+      obj.remove();
+      objects.splice(i,1);
+    }
+  });
+
+  requestAnimationFrame(game);
 }
 
-loop();
+game();
 </script>
 
 </body>
