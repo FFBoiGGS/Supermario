@@ -3,182 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mario Pro - Deniz Z Edition</title>
+    <title>Deniz Z - Ultra Mario</title>
     <style>
         body { margin: 0; overflow: hidden; background: #5c94fc; font-family: 'Arial Black', sans-serif; touch-action: none; }
-        canvas { display: block; }
-        
-        /* GUI Tasarımı */
-        #gui {
-            position: absolute; top: 10px; left: 10px; right: 10px;
-            display: flex; justify-content: space-between;
-            color: white; text-shadow: 3px 3px 0px #000; z-index: 10;
-        }
-        .signature {
-            position: absolute; top: 50px; width: 100%; text-align: center;
-            color: rgba(255, 255, 255, 0.6); font-size: 14px; letter-spacing: 2px;
-        }
-
-        /* Kontrol Paneli */
-        .controls {
-            position: absolute; bottom: 30px; width: 100%;
-            display: flex; justify-content: space-around; align-items: center; z-index: 20;
-        }
-        .dir-pad { display: flex; gap: 20px; }
-        .btn {
-            width: 75px; height: 75px; background: rgba(0, 0, 0, 0.4);
-            border: 4px solid #fff; border-radius: 15px;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 30px; font-weight: bold;
-        }
-        .btn:active { background: #fff; color: #000; }
-        .jump-btn { width: 90px; height: 90px; border-radius: 50%; background: #e74c3c !important; }
+        #howToBtn { position: absolute; top: 10px; left: 10px; padding: 10px; background: #f1c40f; border: 3px solid #fff; border-radius: 10px; font-size: 12px; z-index: 100; }
+        #gui { position: absolute; top: 10px; right: 10px; color: white; text-align: right; z-index: 100; text-shadow: 2px 2px #000; }
+        .controls { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: space-around; z-index: 100; }
+        .btn { width: 70px; height: 70px; background: rgba(0,0,0,0.3); border: 3px solid #fff; border-radius: 15px; display: flex; align-items: center; justify-content: center; color: white; font-size: 25px; }
+        .jump { background: #e74c3c !important; border-radius: 50%; width: 85px; height: 85px; }
+        #signature { position: absolute; bottom: 5px; width: 100%; text-align: center; color: white; font-size: 10px; opacity: 0.6; }
     </style>
 </head>
 <body>
 
-<div id="gui">
-    <div>PUAN: <span id="score">0</span></div>
-    <div>CAN: <span id="lives">3</span></div>
-</div>
-<div class="signature">DENİZ Z TARAFINDAN YAPILDI</div>
+<button id="howToBtn" onclick="alert('ÖĞRETİCİ:\n1. Oklarla ilerle, A ile zıpla.\n2. Soru işaretli bloklara kafanla vurup MANTAR çıkar!\n3. Mantarı alıp BÜYÜ (2 Can).\n4. Düşmanların üstüne zıplayarak onları öldür!')">NASIL OYNANIR?</button>
 
-<canvas id="gameCanvas"></canvas>
+<div id="gui">
+    PUAN: <span id="score">0</span><br>
+    DURUM: <span id="status">KÜÇÜK</span>
+</div>
+
+<div id="signature">DENİZ Z TARAFINDAN GELİŞTİRİLDİ</div>
+
+<canvas id="game"></canvas>
 
 <div class="controls">
-    <div class="dir-pad">
-        <div class="btn" id="leftBtn">←</div>
-        <div class="btn" id="rightBtn">→</div>
+    <div style="display:flex; gap:10px;">
+        <div class="btn" id="l">←</div>
+        <div class="btn" id="r">→</div>
     </div>
-    <div class="btn jump-btn" id="jumpBtn">A</div>
+    <div class="btn jump" id="j">A</div>
 </div>
 
 <script>
-const canvas = document.getElementById("gameCanvas");
+const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Değişkenler
+let cameraX = 0;
 let score = 0;
-let lives = 3;
-let gameOver = false;
 const gravity = 0.8;
 
 const player = {
-    x: 50, y: 100, w: 40, h: 50, vx: 0, vy: 0,
-    speed: 5, jump: 15, grounded: false, side: 1
+    x: 100, y: 0, w: 30, h: 40, vx: 0, vy: 0,
+    big: false, grounded: false, side: 1
 };
 
-// Dünya ve Düşmanlar
+// Dünya Elemanları
 const platforms = [
-    {x: 0, y: canvas.height - 80, w: 5000, h: 80, c: "#74bf2e"}, // Yer
-    {x: 200, y: canvas.height - 200, w: 150, h: 30, c: "#ab5233"},
-    {x: 450, y: canvas.height - 320, w: 150, h: 30, c: "#ab5233"},
-    {x: 700, y: canvas.height - 220, w: 200, h: 30, c: "#ab5233"}
+    {x: 0, y: canvas.height-60, w: 5000, h: 60, type: 'ground'}, // Çok uzun yer
+    {x: 300, y: canvas.height-180, w: 50, h: 50, type: 'box', hasMushroom: true},
+    {x: 500, y: canvas.height-220, w: 100, h: 30, type: 'plat'},
+    {x: 700, y: canvas.height-280, w: 50, h: 50, type: 'box', hasMushroom: true},
+    {x: 900, y: canvas.height-180, w: 200, h: 30, type: 'plat'}
 ];
 
 const enemies = [
-    {x: 400, y: canvas.height - 130, w: 40, h: 40, vx: 2, range: 150, startX: 400},
-    {x: 800, y: canvas.height - 130, w: 40, h: 40, vx: -2, range: 200, startX: 800}
+    {x: 600, y: canvas.height-100, w: 40, h: 40, vx: -2},
+    {x: 1200, y: canvas.height-100, w: 40, h: 40, vx: -2},
+    {x: 1800, y: canvas.height-100, w: 40, h: 40, vx: -3}
 ];
 
+const mushrooms = [];
+
 // Kontroller
-let keys = { left: false, right: false };
-const setupBtn = (id, fnStart, fnEnd) => {
+let left = false, right = false;
+const setup = (id, s, e) => {
     const el = document.getElementById(id);
-    el.addEventListener('touchstart', (e) => { e.preventDefault(); fnStart(); });
-    el.addEventListener('touchend', (e) => { e.preventDefault(); fnEnd(); });
+    el.addEventListener('touchstart', (ev) => { ev.preventDefault(); s(); });
+    el.addEventListener('touchend', (ev) => { ev.preventDefault(); e(); });
 };
 
-setupBtn('leftBtn', () => { keys.left = true; player.side = -1; }, () => keys.left = false);
-setupBtn('rightBtn', () => { keys.right = true; player.side = 1; }, () => keys.right = false);
-setupBtn('jumpBtn', () => { if(player.grounded) player.vy = -player.jump; }, () => {});
+setup('l', () => {left = true; player.side = -1;}, () => left = false);
+setup('r', () => {right = true; player.side = 1;}, () => right = false);
+setup('j', () => {if(player.grounded) player.vy = -16;}, () => {});
 
 function update() {
-    if (gameOver) return;
-
-    if (keys.left) player.vx = -player.speed;
-    else if (keys.right) player.vx = player.speed;
+    if(left) player.vx = -6;
+    else if(right) player.vx = 6;
     else player.vx *= 0.8;
 
     player.vy += gravity;
     player.x += player.vx;
     player.y += player.vy;
 
-    // Platform Çarpışma
+    // Kamera Takibi
+    if(player.x > canvas.width/2) cameraX = player.x - canvas.width/2;
+
     player.grounded = false;
     platforms.forEach(p => {
-        if (player.x < p.x + p.w && player.x + player.w > p.x &&
-            player.y < p.y + p.h && player.y + player.h > p.y) {
-            if (player.vy > 0) {
-                player.vy = 0;
-                player.y = p.y - player.h;
-                player.grounded = true;
-            }
-        }
-    });
-
-    // Düşman Hareket ve Çarpışma
-    enemies.forEach((en, index) => {
-        en.x += en.vx;
-        if (Math.abs(en.x - en.startX) > en.range) en.vx *= -1;
-
-        // Çarpışma kontrolü
-        if (player.x < en.x + en.w && player.x + player.w > en.x &&
-            player.y < en.y + en.h && player.y + player.h > en.y) {
+        // Çarpışma Mantığı
+        if(player.x < p.x + p.w && player.x + player.w > p.x &&
+           player.y < p.y + p.h && player.y + player.h > p.y) {
             
-            if (player.vy > 5) { // Üstüne zıplarsa
-                enemies.splice(index, 1);
-                player.vy = -10;
-                score += 100;
-                document.getElementById('score').innerText = score;
-            } else { // Çarparsa yanar
-                lives--;
-                document.getElementById('lives').innerText = lives;
-                player.x = 50; player.y = 100;
-                if (lives <= 0) { gameOver = true; alert("OYUN BİTTİ! Skorun: " + score); location.reload(); }
+            // Ayak teması
+            if(player.vy > 0 && player.y + player.h - player.vy <= p.y) {
+                player.vy = 0; player.y = p.y - player.h; player.grounded = true;
+            } 
+            // Kafa teması (Blok vurma)
+            else if(player.vy < 0 && player.y - player.vy >= p.y + p.h) {
+                player.vy = 2;
+                if(p.hasMushroom) {
+                    mushrooms.push({x: p.x + 10, y: p.y - 40, w: 30, h: 30, vx: 2});
+                    p.hasMushroom = false;
+                    p.type = 'empty';
+                }
             }
         }
     });
 
-    if (player.x < 0) player.x = 0;
+    // Mantar toplama
+    mushrooms.forEach((m, i) => {
+        m.x += m.vx;
+        if(player.x < m.x + m.w && player.x + player.w > m.x && player.y < m.y + m.h && player.y + player.h > m.y) {
+            player.big = true;
+            player.h = 60;
+            document.getElementById('status').innerText = "BÜYÜK (2 CAN)";
+            mushrooms.splice(i, 1);
+        }
+    });
+
+    // Düşman Etkileşimi
+    enemies.forEach((en, i) => {
+        en.x += en.vx;
+        if(player.x < en.x + en.w && player.x + player.w > en.x && player.y < en.y + en.h && player.y + player.h > en.y) {
+            if(player.vy > 5) { // Ezme
+                enemies.splice(i, 1);
+                player.vy = -10;
+                score += 200;
+                document.getElementById('score').innerText = score;
+            } else { // Hasar
+                if(player.big) {
+                    player.big = false; player.h = 40;
+                    player.x -= 100;
+                    document.getElementById('status').innerText = "KÜÇÜK";
+                } else {
+                    alert("YANDIN! Skor: " + score); location.reload();
+                }
+            }
+        }
+    });
 }
 
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(-cameraX, 0);
 
     // Platformlar
     platforms.forEach(p => {
-        ctx.fillStyle = p.c;
+        ctx.fillStyle = p.type === 'ground' ? '#74bf2e' : (p.type === 'box' ? '#f1c40f' : '#ab5233');
         ctx.fillRect(p.x, p.y, p.w, p.h);
+        if(p.type === 'box') { ctx.fillStyle='white'; ctx.fillText('?', p.x+20, p.y+30); }
     });
 
-    // Düşmanlar (Goomba niyetine kırmızı blok)
-    ctx.fillStyle = "#2c3e50";
-    enemies.forEach(en => {
-        ctx.fillRect(en.x, en.y, en.w, en.h);
-        ctx.fillStyle = "red";
-        ctx.fillRect(en.x + 5, en.y + 10, 10, 10); // Göz 1
-        ctx.fillRect(en.x + 25, en.y + 10, 10, 10); // Göz 2
-        ctx.fillStyle = "#2c3e50";
-    });
+    // Mantarlar
+    ctx.fillStyle = '#e74c3c';
+    mushrooms.forEach(m => ctx.fillRect(m.x, m.y, m.w, m.h));
 
-    // Mario Çizimi (Deniz Z Özel Versiyon)
-    ctx.save();
-    ctx.translate(player.x + player.w/2, player.y + player.h/2);
-    if(player.side === -1) ctx.scale(-1, 1);
-    
-    ctx.fillStyle = "red"; ctx.fillRect(-20, -25, 40, 40); // Gövde
-    ctx.fillStyle = "#ffdbac"; ctx.fillRect(-10, -20, 25, 20); // Yüz
-    ctx.fillStyle = "blue"; ctx.fillRect(-20, 5, 40, 20); // Tulum
+    // Düşmanlar
+    ctx.fillStyle = '#2c3e50';
+    enemies.forEach(en => ctx.fillRect(en.x, en.y, en.w, en.h));
+
+    // Mario
+    ctx.fillStyle = player.big ? '#d35400' : 'red';
+    ctx.fillRect(player.x, player.y, player.w, player.h);
+    // Gözler (yön için)
+    ctx.fillStyle = 'white';
+    let eyeX = player.side === 1 ? player.x + 20 : player.x + 5;
+    ctx.fillRect(eyeX, player.y + 10, 5, 5);
+
     ctx.restore();
-
     update();
     requestAnimationFrame(draw);
 }
-
 draw();
 </script>
 </body>
