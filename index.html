@@ -3,43 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mario Mobil - Okul Sergisi</title>
+    <title>Mario Pro - Deniz Z Edition</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #5c94fc; font-family: sans-serif; touch-action: none; }
+        body { margin: 0; overflow: hidden; background: #5c94fc; font-family: 'Arial Black', sans-serif; touch-action: none; }
         canvas { display: block; }
         
-        /* Mobil Butonlar */
+        /* GUI Tasarımı */
+        #gui {
+            position: absolute; top: 10px; left: 10px; right: 10px;
+            display: flex; justify-content: space-between;
+            color: white; text-shadow: 3px 3px 0px #000; z-index: 10;
+        }
+        .signature {
+            position: absolute; top: 50px; width: 100%; text-align: center;
+            color: rgba(255, 255, 255, 0.6); font-size: 14px; letter-spacing: 2px;
+        }
+
+        /* Kontrol Paneli */
         .controls {
-            position: absolute; bottom: 20px; width: 100%;
-            display: flex; justify-content: space-between; padding: 0 20px; box-sizing: border-box;
+            position: absolute; bottom: 30px; width: 100%;
+            display: flex; justify-content: space-around; align-items: center; z-index: 20;
         }
-        .btn-group { display: flex; gap: 15px; }
+        .dir-pad { display: flex; gap: 20px; }
         .btn {
-            width: 70px; height: 70px; background: rgba(255, 255, 255, 0.4);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 24px; color: white; user-select: none;
-            border: 3px solid white;
+            width: 75px; height: 75px; background: rgba(0, 0, 0, 0.4);
+            border: 4px solid #fff; border-radius: 15px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 30px; font-weight: bold;
         }
-        .btn:active { background: rgba(255, 255, 255, 0.8); transform: scale(0.9); }
-        #jumpBtn { background: rgba(255, 0, 0, 0.4); width: 85px; height: 85px; }
+        .btn:active { background: #fff; color: #000; }
+        .jump-btn { width: 90px; height: 90px; border-radius: 50%; background: #e74c3c !important; }
     </style>
 </head>
 <body>
 
-<div style="position: absolute; top: 10px; width: 100%; text-align: center; color: white; text-shadow: 2px 2px #000;">
-    <h2 style="margin:0">MARIO MOBILE</h2>
-    <p style="margin:5px">Puan: <span id="score">0</span></p>
+<div id="gui">
+    <div>PUAN: <span id="score">0</span></div>
+    <div>CAN: <span id="lives">3</span></div>
 </div>
+<div class="signature">DENİZ Z TARAFINDAN YAPILDI</div>
 
 <canvas id="gameCanvas"></canvas>
 
-<!-- Dokunmatik Kontroller -->
 <div class="controls">
-    <div class="btn-group">
+    <div class="dir-pad">
         <div class="btn" id="leftBtn">←</div>
         <div class="btn" id="rightBtn">→</div>
     </div>
-    <div class="btn" id="jumpBtn">Zıpla</div>
+    <div class="btn jump-btn" id="jumpBtn">A</div>
 </div>
 
 <script>
@@ -49,85 +60,126 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// Değişkenler
 let score = 0;
-const gravity = 0.6;
-let moveLeft = false;
-let moveRight = false;
+let lives = 3;
+let gameOver = false;
+const gravity = 0.8;
 
 const player = {
-    x: 50, y: 100, w: 35, h: 50,
-    dy: 0, speed: 4, jumpForce: 12, grounded: false
+    x: 50, y: 100, w: 40, h: 50, vx: 0, vy: 0,
+    speed: 5, jump: 15, grounded: false, side: 1
 };
 
+// Dünya ve Düşmanlar
 const platforms = [
-    {x: 0, y: canvas.height - 120, w: 2000, h: 120, color: "#74bf2e"}, // Yer
-    {x: 100, y: canvas.height - 220, w: 100, h: 30, color: "#ab5233"},
-    {x: 250, y: canvas.height - 320, w: 100, h: 30, color: "#ab5233"},
-    {x: 400, y: canvas.height - 250, w: 120, h: 30, color: "#f7d519"}
+    {x: 0, y: canvas.height - 80, w: 5000, h: 80, c: "#74bf2e"}, // Yer
+    {x: 200, y: canvas.height - 200, w: 150, h: 30, c: "#ab5233"},
+    {x: 450, y: canvas.height - 320, w: 150, h: 30, c: "#ab5233"},
+    {x: 700, y: canvas.height - 220, w: 200, h: 30, c: "#ab5233"}
 ];
 
-// Dokunmatik Eventler
-const setupBtn = (id, startFn, endFn) => {
-    const btn = document.getElementById(id);
-    btn.addEventListener('touchstart', (e) => { e.preventDefault(); startFn(); });
-    btn.addEventListener('touchend', (e) => { e.preventDefault(); endFn(); });
+const enemies = [
+    {x: 400, y: canvas.height - 130, w: 40, h: 40, vx: 2, range: 150, startX: 400},
+    {x: 800, y: canvas.height - 130, w: 40, h: 40, vx: -2, range: 200, startX: 800}
+];
+
+// Kontroller
+let keys = { left: false, right: false };
+const setupBtn = (id, fnStart, fnEnd) => {
+    const el = document.getElementById(id);
+    el.addEventListener('touchstart', (e) => { e.preventDefault(); fnStart(); });
+    el.addEventListener('touchend', (e) => { e.preventDefault(); fnEnd(); });
 };
 
-setupBtn('leftBtn', () => moveLeft = true, () => moveLeft = false);
-setupBtn('rightBtn', () => moveRight = true, () => moveRight = false);
-setupBtn('jumpBtn', () => { if(player.grounded) player.dy = -player.jumpForce; }, () => {});
+setupBtn('leftBtn', () => { keys.left = true; player.side = -1; }, () => keys.left = false);
+setupBtn('rightBtn', () => { keys.right = true; player.side = 1; }, () => keys.right = false);
+setupBtn('jumpBtn', () => { if(player.grounded) player.vy = -player.jump; }, () => {});
 
 function update() {
-    if (moveLeft) player.x -= player.speed;
-    if (moveRight) player.x += player.speed;
+    if (gameOver) return;
 
-    player.dy += gravity;
-    player.y += player.dy;
+    if (keys.left) player.vx = -player.speed;
+    else if (keys.right) player.vx = player.speed;
+    else player.vx *= 0.8;
 
+    player.vy += gravity;
+    player.x += player.vx;
+    player.y += player.vy;
+
+    // Platform Çarpışma
     player.grounded = false;
     platforms.forEach(p => {
         if (player.x < p.x + p.w && player.x + player.w > p.x &&
             player.y < p.y + p.h && player.y + player.h > p.y) {
-            if (player.dy > 0) {
-                player.dy = 0;
+            if (player.vy > 0) {
+                player.vy = 0;
                 player.y = p.y - player.h;
                 player.grounded = true;
             }
         }
     });
 
-    if (player.x < 0) player.x = 0;
-    if (player.x > canvas.width - player.w) player.x = canvas.width - player.w;
+    // Düşman Hareket ve Çarpışma
+    enemies.forEach((en, index) => {
+        en.x += en.vx;
+        if (Math.abs(en.x - en.startX) > en.range) en.vx *= -1;
 
-    draw();
-    requestAnimationFrame(update);
+        // Çarpışma kontrolü
+        if (player.x < en.x + en.w && player.x + player.w > en.x &&
+            player.y < en.y + en.h && player.y + player.h > en.y) {
+            
+            if (player.vy > 5) { // Üstüne zıplarsa
+                enemies.splice(index, 1);
+                player.vy = -10;
+                score += 100;
+                document.getElementById('score').innerText = score;
+            } else { // Çarparsa yanar
+                lives--;
+                document.getElementById('lives').innerText = lives;
+                player.x = 50; player.y = 100;
+                if (lives <= 0) { gameOver = true; alert("OYUN BİTTİ! Skorun: " + score); location.reload(); }
+            }
+        }
+    });
+
+    if (player.x < 0) player.x = 0;
 }
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Arka plan bulut
-    ctx.fillStyle = "white";
-    ctx.beginPath(); ctx.arc(80, 80, 20, 0, Math.PI*2); ctx.arc(110, 80, 25, 0, Math.PI*2); ctx.fill();
-
     // Platformlar
     platforms.forEach(p => {
-        ctx.fillStyle = p.color;
+        ctx.fillStyle = p.c;
         ctx.fillRect(p.x, p.y, p.w, p.h);
-        ctx.strokeStyle = "#4a2512";
-        ctx.strokeRect(p.x, p.y, p.w, p.h);
     });
 
-    // Basit Mario Karakteri
-    ctx.fillStyle = "red"; // Şapka/Gövde
-    ctx.fillRect(player.x, player.y, player.w, player.h);
-    ctx.fillStyle = "blue"; // Pantolon
-    ctx.fillRect(player.x, player.y + 30, player.w, 20);
-    ctx.fillStyle = "#ffdbac"; // Yüz
-    ctx.fillRect(player.x + 10, player.y + 5, 20, 15);
+    // Düşmanlar (Goomba niyetine kırmızı blok)
+    ctx.fillStyle = "#2c3e50";
+    enemies.forEach(en => {
+        ctx.fillRect(en.x, en.y, en.w, en.h);
+        ctx.fillStyle = "red";
+        ctx.fillRect(en.x + 5, en.y + 10, 10, 10); // Göz 1
+        ctx.fillRect(en.x + 25, en.y + 10, 10, 10); // Göz 2
+        ctx.fillStyle = "#2c3e50";
+    });
+
+    // Mario Çizimi (Deniz Z Özel Versiyon)
+    ctx.save();
+    ctx.translate(player.x + player.w/2, player.y + player.h/2);
+    if(player.side === -1) ctx.scale(-1, 1);
+    
+    ctx.fillStyle = "red"; ctx.fillRect(-20, -25, 40, 40); // Gövde
+    ctx.fillStyle = "#ffdbac"; ctx.fillRect(-10, -20, 25, 20); // Yüz
+    ctx.fillStyle = "blue"; ctx.fillRect(-20, 5, 40, 20); // Tulum
+    ctx.restore();
+
+    update();
+    requestAnimationFrame(draw);
 }
 
-update();
+draw();
 </script>
 </body>
 </html>
