@@ -2,35 +2,60 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Mini Mario</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Mario Mobile</title>
+
 <style>
-  body {
-    margin: 0;
-    overflow: hidden;
-    background: skyblue;
-  }
-  #game {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-  }
-  #mario {
-    position: absolute;
-    bottom: 50px;
-    left: 50px;
-    width: 40px;
-    height: 40px;
-    background: red;
-    border-radius: 5px;
-  }
-  .ground {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 50px;
-    background: green;
-  }
+body {
+  margin: 0;
+  overflow: hidden;
+  background: skyblue;
+}
+
+#game {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+#mario {
+  position: absolute;
+  bottom: 60px;
+  left: 50px;
+  width: 40px;
+  height: 40px;
+  background: red;
+  border-radius: 8px;
+}
+
+.ground {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 60px;
+  background: green;
+}
+
+/* Butonlar */
+.controls {
+  position: fixed;
+  bottom: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+}
+
+button {
+  width: 70px;
+  height: 70px;
+  font-size: 20px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  color: white;
+}
 </style>
+
 </head>
 <body>
 
@@ -39,30 +64,43 @@
   <div class="ground"></div>
 </div>
 
+<div class="controls">
+  <button onclick="move(-10)">⬅️</button>
+  <button onclick="jump()">⬆️</button>
+  <button onclick="move(10)">➡️</button>
+</div>
+
 <script>
 let mario = document.getElementById("mario");
-let jumping = false;
-let velocity = 0;
-let gravity = 0.5;
-let position = 50;
 
-document.addEventListener("keydown", function(e) {
-  if (e.code === "Space" && !jumping) {
-    velocity = 10;
+let x = 50;
+let y = 60;
+let velocity = 0;
+let gravity = 0.6;
+let jumping = false;
+
+function move(dir) {
+  x += dir;
+}
+
+function jump() {
+  if (!jumping) {
+    velocity = 12;
     jumping = true;
   }
-});
+}
 
 function gameLoop() {
   velocity -= gravity;
-  position += velocity;
+  y += velocity;
 
-  if (position <= 50) {
-    position = 50;
+  if (y <= 60) {
+    y = 60;
     jumping = false;
   }
 
-  mario.style.bottom = position + "px";
+  mario.style.left = x + "px";
+  mario.style.bottom = y + "px";
 
   requestAnimationFrame(gameLoop);
 }
